@@ -6,15 +6,19 @@ var max = [1000000,'Amount is too high'];
 const transactionSchema = new Schema({
     retailer: {
         type: Schema.Types.ObjectId,
-        ref: 'Retailer'
+        ref: 'User'
     },
     customer: {
         type: Schema.Types.ObjectId,
-        ref: 'Customer'
+        ref: 'User'
     },
     itemName: {
         type: String,
         maxLength: [30, 'Item name should not be more than 30 characters']
+    },
+    note:{
+        type: String,
+        maxLength: [150, 'Note should be less then 150 characters']
     },
     amount: {
         type: Number,

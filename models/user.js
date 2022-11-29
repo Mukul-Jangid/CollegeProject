@@ -1,19 +1,27 @@
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose')
 const { Schema } = mongoose;
-const jwt = require('jsonwebtoken');
 
-const retailerSchema = new Schema({
+const userSchema = new Schema({
     shopName: {
         type: String,
-        required: [true, 'Please provide Shopname'],
         maxlength: [100, 'Should not exceed 100 char'],
+    },
+    name: {
+        type: String,
+        required: [true, 'Please provide name'],
+        maxlength: [20, 'Should not exceed 100 char']
     },
     phone: {
         type: String,
         required: [true, 'Please provide phone'],
         unique: true,
         maxlength: [10, 'Phone should be of more than 10 characters']
+    },
+    role: {
+        type:String,
+        default: "Customer",
+        enum: ["Customer","Retailer"]
     },
     password: {
         type: String,
@@ -32,7 +40,7 @@ const retailerSchema = new Schema({
 })
 
 
-retailerSchema.pre("save", async function (next) {
+userSchema.pre("save", async function (next) {
     if (!this.isModified("password")) {
         return next();
     }
@@ -40,9 +48,9 @@ retailerSchema.pre("save", async function (next) {
 })
 
 
-retailerSchema.methods.validatePassword = async function (usersendpassword) {
+userSchema.methods.validatePassword = async function (usersendpassword) {
     return bcrypt.compare(usersendpassword, this.password);
 }
-const retailer = mongoose.model("Retailer", retailerSchema);
+const user = mongoose.model("User", userSchema);
 
-module.exports=retailer
+module.exports=user

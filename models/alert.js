@@ -8,11 +8,11 @@ const alertSchema = new Schema({
     },
     retailer: {
         type: Schema.Types.ObjectId,
-        ref: 'Retailer'
+        ref: 'User'
     },
     customer: {
         type: Schema.Types.ObjectId,
-        ref: 'Customer'
+        ref: 'User'
     },
     message:{
         type: String,
