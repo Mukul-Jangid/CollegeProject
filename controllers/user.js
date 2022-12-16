@@ -14,7 +14,7 @@ exports.getUserById = async (req, res, next, id) => {
 }
 exports.getUserByPhone = async (req,res)=>{
     try {
-        const user = await User.findOne({phone: phone});
+        const user = await User.findOne({phone: req.body.phone});
     if(user){
         return res.status(200).json({
             user,
@@ -26,7 +26,7 @@ exports.getUserByPhone = async (req,res)=>{
         success: false
     })
     } catch (error) {
-        
+        console.log(error);
     }
 }
 exports.signup = async (req, res) => {
