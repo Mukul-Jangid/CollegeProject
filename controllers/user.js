@@ -6,7 +6,7 @@ exports.getUserById = async (req, res, next, id) => {
 
     if (!user) {
         return res.status(400).json({
-            error: "No Retailer found in DB"
+            error: "No User found in DB"
         });
     }
     req.user = user
@@ -119,7 +119,9 @@ exports.getAllTransactionsOfRetailer = async (req,res)=>{
 
 exports.getAllTransactionsOfCustomer = async (req,res) =>{
     try{
+
         let transactions =await Transaction.find({customer:req.user.id}).populate('retailer').exec()
+        console.log(transactions);
         res.status(200).json({
             success:true,
             transactions

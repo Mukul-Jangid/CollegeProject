@@ -1,4 +1,4 @@
-exports.isRetailer = async (req,res)=>{
+exports.isRetailer = async (req,res,next)=>{
     if(req.user.role == "Retailer"){
         next();
     }

@@ -2,7 +2,7 @@ const Transaction = require('../models/transaction')
 
 exports.createTransaction = async (req, res)=>{
     let {customer,itemName, amount,paid, due,note} = req.body;
-    let retailer = req.retailer.id
+    let retailer = req.user.id
     if(!retailer || !customer || !itemName || !amount){
         return res.status(400).json({
             error: 'All Fields are required',

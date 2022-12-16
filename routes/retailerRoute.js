@@ -3,7 +3,7 @@ const { createTransaction, updateTransaction } = require('../controllers/transac
 const router= express.Router();
 const {signup,signin, getAllTransactionsOfRetailer, getUserById, getUserByPhone} = require('../controllers/user');
 const { isRetailer } = require('../middlewares/isRetailer');
-router.param('userId', getUserById);
+router.param('retailerId', getUserById);
 router.route('/retailer/signup').post(signup)
 router.route('/retailer/signin').post(signin)
 router.route('/retailer/create_transaction/:retailerId').post(isRetailer,createTransaction)
