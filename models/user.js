@@ -16,7 +16,7 @@ const userSchema = new Schema({
         type: String,
         required: [true, 'Please provide phone'],
         unique: true,
-        maxlength: [10, 'Phone should be of more than 10 characters']
+        maxlength: [12, 'Phone should be of 12 digits']
     },
     role: {
         type:String,
