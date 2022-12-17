@@ -18,8 +18,7 @@ exports.getUserByPhone = async (req,res)=>{
         console.log(user);
     if(user){
         return res.status(200).json({
-            user,
-            success:true
+           user
         })
     }
     return res.status(404).json({
