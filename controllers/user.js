@@ -52,6 +52,7 @@ exports.signup = async (req, res) => {
             const createdUser = await User.create({
                 name, address, shopName, phone, password, role
             })
+            console.log(createdUser);
             if (createdUser) {
                 return res.status(200).json({
                     user:createdUser,
