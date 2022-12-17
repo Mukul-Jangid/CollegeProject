@@ -83,20 +83,6 @@ exports.signin = async (req, res) => {
                 success: false
             })
         }
-        else {
-            if(user.validatePassword(password)){
-            return res.status(200).json({
-                user:user,
-                success:true
-            })
-            }
-            else{
-                return res.status(404).json({
-                    error: "Wrong Password",
-                    success: false
-                })
-            }
-        }
     } catch (error) {
         console.log(error);
     }
