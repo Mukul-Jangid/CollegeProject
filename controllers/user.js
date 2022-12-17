@@ -77,10 +77,17 @@ exports.signin = async (req, res) => {
             })
         }
         const user = await User.findOne({phone: phone})
+        console.log(user);
         if (!user) {
            return res.status(400).json({
                 error: "Account Not Found",
                 success: false
+            })
+        }
+        else{
+            return res.status(200).json({
+                user:user,
+                success:true
             })
         }
     } catch (error) {
