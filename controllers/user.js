@@ -15,6 +15,7 @@ exports.getUserById = async (req, res, next, id) => {
 exports.getUserByPhone = async (req,res)=>{
     try {
         const user = await User.findOne({phone: req.body.phone});
+        console.log(user);
     if(user){
         return res.status(200).json({
             user,
@@ -32,7 +33,7 @@ exports.getUserByPhone = async (req,res)=>{
 exports.signup = async (req, res) => {
     try {
         const { name, address ,phone,role, shopName, password } = req.body;
-
+        console.log("Signup");
         if (!phone || !name || !password) {
             return res.status(400).json({
                 error: "All fields are required",
