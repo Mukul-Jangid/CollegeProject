@@ -12,8 +12,15 @@ const transactionSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'User'
     },
+    customerName: {
+        type: String
+    },
+    customerPhone: {
+        type: Number
+    },
     itemName: {
         type: String,
+        required: true,
         maxLength: [30, 'Item name should not be more than 30 characters']
     },
     note:{
@@ -25,6 +32,10 @@ const transactionSchema = new Schema({
         min: min,
         max: max,
         required: true
+    },
+    status: {
+        type: String,
+        default: "active",
     },
     paid: {
         type: Number,

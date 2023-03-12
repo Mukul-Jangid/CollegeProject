@@ -3,7 +3,6 @@ const Transaction = require('../models/transaction');
 
 exports.getUserById = async (req, res, next, id) => {
     const user = await User.findById({ _id: id })
-
     if (!user) {
         return res.status(400).json({
             error: "No User found in DB"
@@ -14,7 +13,7 @@ exports.getUserById = async (req, res, next, id) => {
 }
 exports.getUserByPhone = async (req,res)=>{
     try {
-        const user = await User.findOne({phone: req.body.phone});
+        const user = await User.findOne({phone: req.body.phone || req.query.phone});
         console.log(user);
     if(user){
         return res.status(200).json(user)
@@ -31,7 +30,7 @@ exports.signup = async (req, res) => {
     try {
         const { name, address ,phone,role, shopName, password } = req.body;
         console.log("Signup");
-        if (!phone || !name || !password) {
+        if (!phone || !name) {
             return res.status(400).json({
                 error: "All fields are required",
                 success: false
@@ -63,37 +62,6 @@ exports.signup = async (req, res) => {
         console.log(error);
     }
 }
-
-
-exports.signin = async (req, res) => {
-    try {
-        const { phone, password } = req.body;
-
-        if (!phone || !password) {
-           return res.status(400).json({
-                error: "All fields are required",
-                success: false
-            })
-        }
-        const user = await User.findOne({phone: phone})
-        console.log(user);
-        if (!user) {
-           return res.status(400).json({
-                error: "Account Not Found",
-                success: false
-            })
-        }
-        else{
-            return res.status(200).json({
-                user:user,
-                success:true
-            })
-        }
-    } catch (error) {
-        console.log(error);
-    }
-}
-
 exports.getAllTransactionsOfRetailer = async (req,res)=>{
     try {
         const transactions =await Transaction.find({retailer: req.user.id}).populate('customer').exec();

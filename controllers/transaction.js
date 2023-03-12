@@ -1,9 +1,11 @@
-const Transaction = require('../models/transaction')
+const Transaction = require('../models/transaction');
+const User = require('../models/user');
 
 exports.createTransaction = async (req, res)=>{
-    let {customer,itemName, amount,paid, due,note} = req.body;
+    let {customerPhone, customerName, itemName, amount,paid, due,note} = req.body;
     let retailer = req.user.id
-    if(!retailer || !customer || !itemName || !amount){
+    let customer = await User.findOne({phone: customerPhone});
+    if(!retailer || !customerPhone || !customerName || !itemName || !amount){
         return res.status(400).json({
             error: 'All Fields are required',
             success: false
@@ -15,9 +17,16 @@ exports.createTransaction = async (req, res)=>{
     if(!due){
         paid=amount;
     }
-    const transaction = await Transaction.create({
-       retailer, customer,itemName, amount,paid, due,note
+    const transaction =  new Transaction({
+        customerPhone, customerName, retailer,itemName, amount,paid, due,note
     })
+    if(customer){
+        transaction.customer = customer.id;
+    }
+    if(transaction.due == 0){
+        transaction.status = 'inactive';
+    } 
+    await transaction.save();
     if(transaction){
         return res.status(200).json({
             transaction,
@@ -38,8 +47,11 @@ exports.updateTransaction = async (req, res)=>{
                 success: false
             })
         }
-        transaction.paid = paid;transaction.due = transaction.amount-transaction.paid
+        transaction.paid = paid;
+        transaction.due = transaction.amount-transaction.paid
         transaction.note = note
+        if(transaction.due == 0)
+            transaction.status = 'inactive';
         await transaction.save();
         // const transaction = Transaction.findByIdAndUpdate({id : req.query.transactionId},{paid:paid ,note:note})
 

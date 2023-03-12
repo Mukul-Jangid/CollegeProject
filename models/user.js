@@ -23,12 +23,12 @@ const userSchema = new Schema({
         default: "Customer",
         enum: ["Customer","Retailer"]
     },
-    password: {
-        type: String,
-        required: [true, 'Please provide Password'],
-        minlength: [6, 'password should be of 6 character'],
-        select: false //does not return password field in object         
-    },
+    // password: {
+    //     type: String,
+    //     required: [true, 'Please provide Password'],
+    //     minlength: [6, 'password should be of 6 character'],
+        
+    // },
     address: {
         type: String,
         maxlength: [300, 'Address should not be more than 300 characters']

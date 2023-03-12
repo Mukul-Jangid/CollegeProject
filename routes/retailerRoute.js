@@ -5,10 +5,10 @@ const {signup,signin, getAllTransactionsOfRetailer, getUserById, getUserByPhone}
 const { isRetailer } = require('../middlewares/isRetailer');
 router.param('retailerId', getUserById);
 router.route('/retailer/signup').post(signup)
-router.route('/retailer/signin').post(signin)
-router.route('/retailer/create_transaction/:retailerId').post(isRetailer,createTransaction)
-router.route('/retailer/transactions/:retailerId').get(isRetailer,getAllTransactionsOfRetailer)
+// router.route('/retailer/signin').post(signin)
+router.route('/retailer/create_transaction/:retailerId').post(getUserById,createTransaction)
+router.route('/retailer/transactions/:retailerId').get(getUserById,getAllTransactionsOfRetailer)
 router.route('/retailer/update_transaction').put(isRetailer,updateTransaction)
-router.route('/retailer/by_phone').post(isRetailer,getUserByPhone);
-router.route('/user/by_phone').post(getUserByPhone);
+router.route('/retailer/by_phone').get(isRetailer,getUserByPhone);
+// router.route('/user/by_phone').get(getUserByPhone);
 module.exports = router;
