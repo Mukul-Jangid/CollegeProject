@@ -15,6 +15,6 @@ app.use('/api/v1',retailerRoute);
 // app.use('/api/v1',alertRoute)
 Connection();
 
-app.listen(process.env.PORT, () => {
+app.listen(5000, () => {
     console.log("server is running at port 5000");
 })

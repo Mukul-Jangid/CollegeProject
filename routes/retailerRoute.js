@@ -9,8 +9,8 @@ router.route('/retailer/signup').post(signup)
 router.route('/retailer/create_transaction/:retailerId').post(getUserById,createTransaction)
 router.route('/retailer/transactions/:retailerId').get(getUserById,getAllTransactionsOfRetailer)
 router.route('/retailer/update_transaction').put(isRetailer,updateTransaction)
-router.route('/retailer/by_phone').get(isRetailer,getUserByPhone);
+// router.route('/retailer/by_phone').get(isRetailer,getUserByPhone);
 router.route('/retailer/customers/:retailerId').get(getUserById,getCustomersOfRetailer);
 router.route('/retailer/customer/transactions/:retailerId').get(getCustomerTransactionsMadeByRetailer);
-// router.route('/user/by_phone').get(getUserByPhone);
+router.route('/user/by_phone').get(getUserByPhone);
 module.exports = router;
