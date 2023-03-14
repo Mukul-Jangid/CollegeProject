@@ -104,12 +104,12 @@ exports.getCustomersOfRetailer = async (req,res) =>{
           _id: {
             key1: "$customerPhone",
           },
-          customer: {
+          object: {
             $first: "$$ROOT"
           }
         }
       }])
-       customers = customers.map(customer=>customer.customer);
+       customers = customers.map(customer=>{ return {customerName: customer.object.customerName, customerPhone: customer.object.customerPhone}});
         res.status(200).json({
             success: true,
             customers
