@@ -111,14 +111,15 @@ exports.getCustomersOfRetailer = async (req,res) =>{
       }])
        customers = customers.map(customer=>customer.customer);
         res.status(200).json({
-            success: true,
+            // success: true,
             customers
         })
     } catch (error) {
         console.log(error);
         res.status(401).json({
-            error: "Some error occured",
-            success:false
+            error: "Some error occured"
+            // ,
+            // success:false
         })
     }
 }
