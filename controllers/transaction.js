@@ -69,3 +69,15 @@ exports.updateTransaction = async (req, res)=>{
         console.log(error);
     }
 }
+
+exports.getTransactionById = async(req,res)=>{
+    try {
+        const transaction = await Transaction.findById({ _id: req.params['transaction_id'] })
+    } catch (error) {
+        console.log(error);
+        res.status(401).json({
+            error: "Some error occured",
+            success:false
+        })
+    }
+}

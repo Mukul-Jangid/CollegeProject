@@ -1,6 +1,6 @@
 const User = require('../models/user');
 const Transaction = require('../models/transaction');
-
+const mongoose = require('mongoose')
 exports.getUserById = async (req, res, next, id) => {
     const user = await User.findById({ _id: id })
     if (!user) {
@@ -80,13 +80,57 @@ exports.getAllTransactionsOfRetailer = async (req,res)=>{
 exports.getAllTransactionsOfCustomer = async (req,res) =>{
     try{
 
-        let transactions =await Transaction.find({customer:req.user.id}).populate('retailer').exec()
+        let transactions =await Transaction.find({customerPhone: req.query.customerPhone}).populate('retailer').exec()
         console.log(transactions);
         res.status(200).json({
             success:true,
             transactions
         })
     }catch(error){
+        console.log(error);
+        res.status(401).json({
+            error: "Some error occured",
+            success:false
+        })
+    }
+}
+
+exports.getCustomersOfRetailer = async (req,res) =>{
+    try {
+       let customers =  await Transaction.aggregate([
+        { "$match": { "retailer":  new mongoose.Types.ObjectId(req.user.id)} },
+        {
+        $group: {
+          _id: {
+            key1: "$customerPhone",
+          },
+          customer: {
+            $first: "$$ROOT"
+          }
+        }
+      }])
+       customers = customers.map(customer=>customer.customer);
+        res.status(200).json({
+            success: true,
+            customers
+        })
+    } catch (error) {
+        console.log(error);
+        res.status(401).json({
+            error: "Some error occured",
+            success:false
+        })
+    }
+}
+
+exports.getCustomerTransactionsMadeByRetailer = async(req,res) =>{
+    try {
+        let transactions = await Transaction.find({customerPhone: req.query.customerPhone, retailer: req.user.id});
+        res.status(200).json({
+            success: true,
+            transactions
+        })
+    } catch (error) {
         console.log(error);
         res.status(401).json({
             error: "Some error occured",
