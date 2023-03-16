@@ -51,10 +51,7 @@ exports.signup = async (req, res) => {
             })
             console.log(createdUser);
             if (createdUser) {
-                return res.status(200).json({
-                    user:createdUser,
-                    success:true
-                })
+                return res.status(200).json(createdUser)
             }
         }
 
@@ -110,10 +107,7 @@ exports.getCustomersOfRetailer = async (req,res) =>{
         }
       }])
        customers = customers.map(customer=>{ return {customerName: customer.object.customerName, customerPhone: customer.object.customerPhone}});
-        res.status(200).json({
-            // success: true,
-            customers
-        })
+        res.status(200).json(customers)
     } catch (error) {
         console.log(error);
         res.status(401).json({
@@ -124,13 +118,41 @@ exports.getCustomersOfRetailer = async (req,res) =>{
     }
 }
 
+exports.getRetailersOfCustomer = async (req,res)=>{
+    try {
+        let retailers = await Transaction.aggregate([
+            {"$match": {"customer": new mongoose.Types.ObjectId(req.user.id)}},
+            {"$match": {"customer": new mongoose.Types.ObjectId(req.user.phone)}},
+            {
+                $group: {
+                    _id: {
+                      key1: "$retailer",
+                    },
+                    object: {
+                      $first: "$$ROOT"
+                    }
+                  }
+            }
+        ])
+        retailers = retailers.map(ret=> ret.object);
+        retailers = await User.populate(retailers, {path: 'retailer'})
+        retailers = retailers.map(ret => {
+           ret.retailer.role = undefined;
+           return ret.retailer; 
+        });
+        // retailers = retailers.populate('retailer');
+        return res.status(200).json({
+            retailers
+        })
+    } catch (error) {
+        console.log(error);
+    }
+}
+
 exports.getCustomerTransactionsMadeByRetailer = async(req,res) =>{
     try {
         let transactions = await Transaction.find({customerPhone: req.query.customerPhone, retailer: req.user.id});
-        res.status(200).json({
-            success: true,
-            transactions
-        })
+        res.status(200).json(transactions)
     } catch (error) {
         console.log(error);
         res.status(401).json({

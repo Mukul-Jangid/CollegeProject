@@ -4,6 +4,10 @@ const { Schema } = mongoose;
 var min = [1, 'Amount is too less'];
 var max = [1000000,'Amount is too high'];
 const transactionSchema = new Schema({
+    transactionName: {
+        type: String,
+        required: true
+    },
     retailer: {
         type: Schema.Types.ObjectId,
         ref: 'User'
@@ -18,11 +22,16 @@ const transactionSchema = new Schema({
     customerPhone: {
         type: Number
     },
-    itemName: {
-        type: String,
-        required: true,
-        maxLength: [30, 'Item name should not be more than 30 characters']
-    },
+    products: [
+        {
+        productName: {
+            type: String,
+        },
+        productPrice: {
+            type: Number
+        }
+       }
+    ],
     note:{
         type: String,
         maxLength: [150, 'Note should be less then 150 characters']
