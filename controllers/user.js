@@ -141,9 +141,7 @@ exports.getRetailersOfCustomer = async (req,res)=>{
            return ret.retailer; 
         });
         // retailers = retailers.populate('retailer');
-        return res.status(200).json({
-            retailers
-        })
+        return res.status(200).json(retailers)
     } catch (error) {
         console.log(error);
     }

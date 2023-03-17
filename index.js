@@ -6,10 +6,12 @@ const Connection = require('./controllers/db');
 const app = express();
 const customerRoute = require('./routes/customerRoute');
 const retailerRoute = require('./routes/retailerRoute');
+const alertRoute = require('./routes/alertRoute')
 app.use(express.json());
 app.use(express.urlencoded({extended:true}))
 app.use(CookieParser());
 app.use(cors())
+app.use('/api/v1',alertRoute)
 app.use('/api/v1',customerRoute);
 app.use('/api/v1',retailerRoute);
 // app.use('/api/v1',alertRoute)
