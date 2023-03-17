@@ -23,10 +23,7 @@ exports.createTransaction = async (req, res)=>{
     } 
     await transaction.save();
     if(transaction){
-        return res.status(200).json({
-            transaction,
-            success:true
-        })
+        return res.status(200).json(transaction)
     }
 }
 
@@ -50,10 +47,9 @@ exports.updateTransaction = async (req, res)=>{
         // const transaction = Transaction.findByIdAndUpdate({id : req.query.transactionId},{paid:paid ,note:note})
 
         if(transaction){
-          return res.status(200).json({
-                transaction,
-                success:true
-            })
+          return res.status(200).json(
+                transaction
+          )
         }
         return res.status(401).json({
             error: "Some error occured",

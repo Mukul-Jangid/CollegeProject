@@ -62,10 +62,8 @@ exports.signup = async (req, res) => {
 exports.getAllTransactionsOfRetailer = async (req,res)=>{
     try {
         const transactions =await Transaction.find({retailer: req.user.id}).populate('customer').exec();
-        res.status(200).json({
-            success:true,
-            transactions
-        })
+        res.status(200).json(
+            transactions)
     } catch (error) {
         res.status(401).json({
             error:"Some error occured",
@@ -79,10 +77,8 @@ exports.getAllTransactionsOfCustomer = async (req,res) =>{
 
         let transactions =await Transaction.find({customerPhone: req.query.customerPhone}).populate('retailer').exec()
         console.log(transactions);
-        res.status(200).json({
-            success:true,
-            transactions
-        })
+        res.status(200).json(
+            transactions)
     }catch(error){
         console.log(error);
         res.status(401).json({
