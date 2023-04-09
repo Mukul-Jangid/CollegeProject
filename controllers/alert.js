@@ -1,5 +1,5 @@
 const Alert = require('../models/alert');
-const User = require('../models/user');
+const User = require('../models/User');
 
 exports.createAlert = async (req,res)=>{
     const {transaction, customerPhone, message} = req.body;

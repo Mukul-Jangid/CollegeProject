@@ -1,25 +1,25 @@
-const mongoose = require('mongoose')
-const { Schema } = mongoose;
+const mongoose = require('mongoose');
 
-const alertSchema = new Schema({
-    transaction: {
-        type: Schema.Types.ObjectId,
-        ref: 'Transaction'
-    },
-    retailer: {
-        type: Schema.Types.ObjectId,
-        ref: 'User'
-    },
-    customer: {
-        type: Schema.Types.ObjectId,
-        ref: 'User'
-    },
-    message:{
-        type: String,
-        maxLength: [100, 'Message should be less than 100 characters']
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    }
-})
+const alertSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  message: {
+    type: String,
+    required: true
+  },
+  read: {
+    type: Boolean,
+    default: false
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+const Alert = mongoose.model('Alert', alertSchema);
+
+module.exports = Alert;

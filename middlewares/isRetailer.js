@@ -1,4 +1,4 @@
-const User = require('../models/user');
+const User = require('../models/User');
 exports.isRetailer = async (req,res,next)=>{
     const user = await User.findOne({phone: req.body.phone || req.query.phone});
     console.log(user);

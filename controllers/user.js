@@ -1,8 +1,9 @@
-const User = require('../models/user');
+const User = require('../models/User');
 const Transaction = require('../models/transaction');
 const mongoose = require('mongoose')
 exports.getUserById = async (req, res, next, id) => {
     const user = await User.findById({ _id: id })
+    console.log(user);
     if (!user) {
         return res.status(400).json({
             error: "No User found in DB"
@@ -14,6 +15,7 @@ exports.getUserById = async (req, res, next, id) => {
 exports.getUserByPhone = async (req,res)=>{
     try {
         const user = await User.findOne({phone: req.body.phone || req.query.phone});
+        console.log(req.query.phone);
         console.log(user);
     if(user){
         return res.status(200).json(user)
@@ -29,7 +31,6 @@ exports.getUserByPhone = async (req,res)=>{
 exports.signup = async (req, res) => {
     try {
         const { name, address ,phone,role, shopName, password } = req.body;
-        console.log("Signup");
         if (!phone || !name) {
             return res.status(400).json({
                 error: "All fields are required",
@@ -39,6 +40,7 @@ exports.signup = async (req, res) => {
         const check = await User.findOne({
             phone: phone
         }, 'phone').exec();
+        console.log(check);
         if (check) {
             return res.status(400).json({
                 error: "Account Already Exists with this Phone",
@@ -115,10 +117,11 @@ exports.getCustomersOfRetailer = async (req,res) =>{
 }
 
 exports.getRetailersOfCustomer = async (req,res)=>{
+    console.log(req.user);
     try {
         let retailers = await Transaction.aggregate([
             {"$match": {"customer": new mongoose.Types.ObjectId(req.user.id)}},
-            {"$match": {"customer": new mongoose.Types.ObjectId(req.user.phone)}},
+           
             {
                 $group: {
                     _id: {
@@ -137,6 +140,7 @@ exports.getRetailersOfCustomer = async (req,res)=>{
            return ret.retailer; 
         });
         // retailers = retailers.populate('retailer');
+        console.log(retailers);
         return res.status(200).json(retailers)
     } catch (error) {
         console.log(error);
@@ -146,6 +150,7 @@ exports.getRetailersOfCustomer = async (req,res)=>{
 exports.getCustomerTransactionsMadeByRetailer = async(req,res) =>{
     try {
         let transactions = await Transaction.find({customerPhone: req.query.customerPhone, retailer: req.user.id});
+        console.log(transactions );
         res.status(200).json(transactions)
     } catch (error) {
         console.log(error);
