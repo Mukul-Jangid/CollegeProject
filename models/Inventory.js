@@ -7,9 +7,9 @@ const inventorySchema = new mongoose.Schema({
     ref: 'Retailer',
     required: true
   },
-  productId: {
+  batchId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Product',
+    ref: 'Batch',
     required: true
   },
   buyingPrice: {

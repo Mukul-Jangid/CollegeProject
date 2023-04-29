@@ -6,13 +6,13 @@ const retailerSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  businessType: {
-    type: String,
-    required: true
+  businessType: { 
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'BusinessType'
   },
   taxId: {
     type: String,
-    required: true
+    // required: true
   },
   totalSales: {
     type: String,

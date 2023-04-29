@@ -10,7 +10,6 @@ const salesSchema = new mongoose.Schema({
   toRetailerId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Retailer',
-    required: true
   },
   isCustomerSale: {
     type: Boolean,
@@ -19,10 +18,10 @@ const salesSchema = new mongoose.Schema({
   customerEmail:{
     type: String,
   },
-  products: [{
-    productId: {
+  batches: [{
+    batchId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Product',
+      ref: 'Batch',
       required: true
     },
     quantity: {

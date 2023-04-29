@@ -7,20 +7,21 @@ const productSchema = new mongoose.Schema({
     unique: true
   },
   description: {
-    type: String,
-    required: true
-  },
-  maximumRetailPrice: {
-    type: Number,
-    required: true
+    type: String
   },
   sku: {
     type: String,
+    unique: true,
     required: true
   },
   createdDate: {
     type: Date,
     default: Date.now
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Retailer',
+    required: true
   }
 });
 
