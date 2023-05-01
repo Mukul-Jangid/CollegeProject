@@ -26,9 +26,8 @@ app.get('/verify/:uniqueString', async(req, res)=>{
     if(user){
         user.isValid = true
         await user.save()
-        res.status(200).json({
-            message: "Your email is verified you can sign in now"
-        })
+        res.status(200).send("<h1>Your email is verified, you can sign in now</h1>");
+
     }
     else{
         res.json('User not found')

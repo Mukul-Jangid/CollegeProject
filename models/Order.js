@@ -15,7 +15,7 @@ const orderSchema = new mongoose.Schema({
   status: {
     type: String,
     default: 'active',
-    enum: ['inactive', 'active']
+    enum: ['inactive', 'active', 'cancelled','declined']
   },
   products: [{
     batchId: {
@@ -23,13 +23,23 @@ const orderSchema = new mongoose.Schema({
       ref: 'Batch'
     },
     batchNo: {
-        type: String
+      type: String,
+      required: true
     },
     quantity: {
-        type: Number
+        type: Number,
+        required: true
+    },
+    demandedPrice: {
+      type: Number,
+      required: true
     }
   }
   ],
+  totalAmount:{
+    type: Number,
+    required: true
+  },
   createdAt: {
     type: Date,
     default: Date.now

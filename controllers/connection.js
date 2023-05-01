@@ -1,4 +1,6 @@
+const { mailer } = require("../mailer");
 const Connection = require("../models/Connection");
+const Retailer = require("../models/Retailer");
 
 
 exports.createConnectionRequest = async (req, res) => {
@@ -10,10 +12,29 @@ exports.createConnectionRequest = async (req, res) => {
     if (connectionExists) {
       return res.status(400).json({ message: 'Connection already exists' });
     }
-
+    const recipientUser = await Retailer.findById(recipient);
+    const requesterUser = await Retailer.findById(requester).populate('businessType');
     const newConnection = new Connection({ requester, recipient, sourceType });
     const savedConnection = await newConnection.save();
-
+    mailOptions = {
+      from: process.env.MAIL_USER,
+      to: recipientUser.email,
+      subject: 'Connection request for your Digital payments book App',
+      html: `<p>Dear ${recipientUser.name},</p>
+             <p>You have received a connection request from:</p>
+             <ul>
+               <li>Name: ${requesterUser.name}</li>
+               <li>Business Name: ${requesterUser.businessName}</li>
+               <li>Business Type: ${requesterUser.businessType.name}</li>
+               <li>Email: ${requesterUser.email}</li>
+               <li>Phone: ${requesterUser.phone}</li>
+             </ul>
+             <p>Please confirm if you want to connect with them.</p>
+             <p>Accepting the connection request will make trade between you a lot easier</p>
+             <p>Regards,</p>
+             <p>Team Digital Payments book app</p>`
+    };
+    mailer(mailOptions)
     res.status(201).json({ message: 'Connection request sent', connection: savedConnection });
   } catch (error) {
     console.error(error);
@@ -24,13 +45,21 @@ exports.createConnectionRequest = async (req, res) => {
 exports.getMyConnections = async (req, res) => {
   try {
     const {status} = req.query;
-    const myConnections = await Connection.find({
-      $or: [{ requester: req.user._id }, { recipient: req.user._id }],
-      status: status
-    })
+    let myConnections = await Connection.find({
+      $or: [{ requester: req.user}, { recipient: req.user }]
+    }).where({status: status})
     .populate('requester', '_id name email')
     .populate('recipient', '_id name email')
     .exec();
+
+    myConnections = myConnections.map(conn=>{
+      return {
+        id: conn.id,
+        isCreatedByUser: conn.requester == req.user,
+        user: conn.requester == req.user ? conn.recipient : conn.requester,
+        sourceType: conn.requester == req.user ? conn.sourceType : null
+      }
+    })
     // TODO: Improve JSON response
     res.json(myConnections);
   } catch (err) {
@@ -44,7 +73,7 @@ exports.updateConnectionStatus = async (req, res) => {
 // TODO: test this properly
   const { connectionId } = req.params;
   const { status } = req.body;
-  const { userId } = req.user; // Assuming userId is available in the request object after authentication
+  const recipient = req.user; // Assuming userId is available in the request object after authentication
   
   try {
     // Find the connection by ID
@@ -54,12 +83,26 @@ exports.updateConnectionStatus = async (req, res) => {
     }
 
     // Check if the user is authorized to update the connection status
-    if (connection.recipient._id.toString() !== userId && connection.requester._id.toString() !== userId) {
+    if (connection.recipient._id.toString() != recipient) {
       return res.status(401).json({ error: 'Unauthorized to update connection request status' });
     }
 
     // Update the connection status
     connection.status = status;
+    mailOptions = {
+      from: process.env.MAIL_USER,
+      to: connection.requester.email,
+      subject: 'Your connection request is accepted',
+      html: `<p>Dear ${connection.requester.name},</p>
+             <p>Your connection request is accepted by:</p>
+             <p>Business: ${connection.recipient.businessName}</p>
+             <p>Owner: ${connection.recipient.name}</p>
+             <p></p>
+             <p></p>
+             <p>Regards,</p>
+             <p>Team Digital Payments book app</p>`
+    };
+    mailer(mailOptions);
     await connection.save();
 
     // Send response with updated connection object

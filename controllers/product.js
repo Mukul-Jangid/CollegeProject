@@ -90,7 +90,8 @@ exports.searchProduct = async (req, res) => {
 exports.getRetailerProducts = async (req, res) => {
   try {
     const retailerId = req.user;
-    const inventories = await Inventory.find({ retailerId }).populate('batchId');
+    const inventories = await Inventory.find({ retailerId, quantity: { $gt: 1 } }).populate('batchId');
+
     // Create a map of product ids to product information
     const productMap = new Map();
     for (const inventory of inventories) {
@@ -99,7 +100,8 @@ exports.getRetailerProducts = async (req, res) => {
         name: product.name,
         sellingPrice: inventory.sellingPrice,
         MRP: inventory.batchId.MRP,
-        batchNo: inventory.batchId.batchNo
+        batchNo: inventory.batchId.batchNo,
+        quantityAvailable: inventory.quantity
       });
     }
 

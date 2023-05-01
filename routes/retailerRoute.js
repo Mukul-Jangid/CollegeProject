@@ -1,8 +1,9 @@
 const express = require('express');
-const { signup,signin, addBatchInRetailerInventory, addBatchesToRetailerInventory, myInventory,getBatchesByIds, updateBatch, createOrder, myOrders} = require('../controllers/retailer');
+const { signup,signin, addBatchInRetailerInventory, addBatchesToRetailerInventory, myInventory,getBatchesByIds, updateBatch, createOrder, myOrders, updateOrder} = require('../controllers/retailer');
 const { addProducts, getAllProducts, searchProduct, getRetailerProducts } = require('../controllers/product');
 const { verifyToken } = require('../middlewares/verifyToken');
 const { createConnectionRequest, getMyConnections, updateConnectionStatus } = require('../controllers/connection');
+const { getSales, createSale } = require('../controllers/sell');
 
 const router= express.Router();
 router.route('/retailer/signup').post(signup)
@@ -27,16 +28,16 @@ router.route('/retailer/update_batch').put(updateBatch);
 router.route('/retailer/retailer_products').get(verifyToken, getRetailerProducts);
 router.route('/retailer/create_order').post(verifyToken, createOrder)
 router.route('/retailer/my_orders').get(verifyToken, myOrders)
-
+router.route('/retailer/update_order/:id').put(verifyToken, updateOrder)
 // Retailer creates sell to other retailer and customer too
 // in receiver list we will not restrict the Retailer for his connections/ same he can enter any email for customer 
 // he can just enter the email and 
-// router.route('/retailer/my_sells').get(mySells)
-// router.route('/retailer/record_a_sell').post(recordSell)
+router.route('/retailer/my_sells').get(verifyToken, getSales)
+router.route('/retailer/record_a_sell').post(verifyToken, createSale)
 
 //My connections
-router.route('/retailer/my_connections').get(getMyConnections)
-router.route('/retailer/create_connection_req').post(createConnectionRequest)
-router.route('/retailer/update_connection_req').put(updateConnectionStatus)
+router.route('/retailer/my_connections').get(verifyToken, getMyConnections)
+router.route('/retailer/create_connection_req').post(verifyToken, createConnectionRequest)
+router.route('/retailer/update_connection_req/:connectionId').put(verifyToken, updateConnectionStatus)
 
 module.exports = router;

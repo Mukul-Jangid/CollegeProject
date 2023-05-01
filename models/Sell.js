@@ -24,6 +24,10 @@ const salesSchema = new mongoose.Schema({
       ref: 'Batch',
       required: true
     },
+    batchNo: {
+      type: String,
+      required: true
+    },
     quantity: {
       type: Number,
       required: true

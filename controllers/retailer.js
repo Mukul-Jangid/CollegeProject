@@ -4,6 +4,9 @@ const Inventory = require("../models/Inventory");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
 const Retailer = require("../models/Retailer");
+const Sell = require('../models/Sell');
+
+
 const { randString, SKUGenerator } = require("../utils");
 const { createBatch } = require("./product");
 
@@ -27,21 +30,27 @@ exports.signup = async (req, res) => {
             })
         }
         else {
-            const uniqueString = randString();
-            const createdUser = await Retailer.create({
+            const nonVerifiedUser = await Retailer.findOne({email: email, isValid: false}).exec();
+
+            let createdUser = null;
+            let uniqueString = null;
+            if(!nonVerifiedUser){
+              uniqueString = randString();
+              createdUser = await Retailer.create({
                 name, email, phone, address, password, businessName, businessType, uniqueString 
-            })
+              })
+            }
 
             mailOptions = {
                 from: process.env.MAIL_USER,
                 to: email,
                 subject: 'Email Confirmation',
-                html: `Click <a href=${process.env.MAIL_URL}/${uniqueString}>here</a> to verify your email. Thanks`
+                html: `Click <a href=${process.env.MAIL_URL}/${uniqueString || nonVerifiedUser.uniqueString}>here</a> to verify your email. Thanks`
             };
 
             mailer(mailOptions)
 
-            if (createdUser) {
+            if (createdUser || nonVerifiedUser) {
                 return res.status(200).json({"message": "Please verify your email, verification link has been sent to mail provided"})
                 // TODO:What should we send from backend the JWTToken or user
             }
@@ -113,11 +122,20 @@ exports.addBatchInRetailerInventory = async (req, res) => {
           quantity: quantity,
         });
       } else {
-        inventory.batchId = batch._id;
-        inventory.buyingPrice = buyingPrice;
-        inventory.sellingPrice = sellingPrice;
-        inventory.quantity = quantity;
-        await inventory.save();
+        // inventory.batchId = batch._id;
+        if(inventory.buyingPrice == buyingPrice && inventory.sellingPrice == sellingPrice){
+          inventory.quantity = quantity + inventory.quantity;
+          await inventory.save();
+        }
+        else{
+          inventory = await Inventory.create({
+            retailerId: retailerId,
+            batchId: batch._id,
+            buyingPrice: buyingPrice,
+            sellingPrice: sellingPrice,
+            quantity: quantity,
+          });
+        }
       }
   
       res.status(200).json(inventory);
@@ -125,7 +143,7 @@ exports.addBatchInRetailerInventory = async (req, res) => {
       console.log(error);
       res.status(500).json({ success: false, error: error.message });
     }
-  };
+};
   
 
 exports.addBatchesToRetailerInventory = async (req, res) => {
@@ -191,11 +209,19 @@ try {
         });
         await inventory.save();
     } else {
-        // If the inventory already exists, update the existing inventory record
-        inventory.buyingPrice = buyingPrice;
-        inventory.sellingPrice = sellingPrice;
-        inventory.quantity = quantity;
+      if(inventory.buyingPrice == buyingPrice && inventory.sellingPrice == sellingPrice){
+        inventory.quantity = quantity + inventory.quantity;
         await inventory.save();
+      }
+      else{
+        inventory = await Inventory.create({
+          retailerId: retailerId,
+          batchId: batch._id,
+          buyingPrice: buyingPrice,
+          sellingPrice: sellingPrice,
+          quantity: quantity,
+        });
+      }
     }
     }
 
@@ -235,7 +261,10 @@ exports.myInventory = async (req, res) => {
         } else {
           // If product exists, update its quantity and MRP
           products[productIndex].quantity += quantity;
-          products[productIndex].batchIds.push(batchId._id);
+
+          if(!products[productIndex].batchIds.includes(batchId._id)){
+            products[productIndex].batchIds.push(batchId._id);
+          }
         }
       }
       
@@ -284,6 +313,7 @@ exports.getBatchesByIds = async (req, res) => {
 
 exports.updateBatch = async (req, res) => {
   try {
+    // TODO: Only the quantity can be updated if user is not creator
     const { batchId } = req.query;
     const { MRP, mfg, expiry, quantity } = req.body;
 
@@ -308,7 +338,7 @@ exports.updateBatch = async (req, res) => {
 
 exports.createOrder = async (req, res) => {
   try {
-    const { receiverId, products } = req.body;
+    const { receiverId, products, totalAmount} = req.body;
 
     if (!receiverId) {
       return res.status(400).json({ error: 'Receiver ID is required.' });
@@ -336,6 +366,7 @@ exports.createOrder = async (req, res) => {
     const order = await Order.create({
       creator: req.user,
       receiver: receiverId,
+      totalAmount : totalAmount,
       products,
     })
 
@@ -346,7 +377,7 @@ exports.createOrder = async (req, res) => {
         model: 'Product'
       }
     })
-    .exec();;
+    .exec();
     
     const creatorDetails = await Retailer.findById(req.user);
     const receiverDetails = await Retailer.findById(receiverId);
@@ -376,6 +407,52 @@ exports.createOrder = async (req, res) => {
     return res.status(500).json({ error: 'Something went wrong.' });
   }
 };
+
+// Update an existing order by ID
+// main use to cancel the order
+exports.updateOrder = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+    console.log(order);
+    // Update order properties
+    if (req.body.status) {
+      order.status = req.body.status;
+    }
+    if(req.body.status == 'inactive'){
+      let batches = [];
+      order.products.forEach(batch=>{
+        let obj = {
+          batchId: batch.batchId,
+          batchNo: batch.batchNo,
+          quantity: batch.quantity,
+          price: batch.demandedPrice
+        }
+        batches.push(obj);
+      })
+      const sale = await Sell.create({
+        fromRetailerId : order.receiver,
+        toRetailerId : order.creator,
+        batches : batches,
+        totalPrice : order.totalAmount,
+        paid : 0,
+        due: order.totalAmount,
+        // TODO: Update if we add an option to pay when order created
+      });
+      
+    }
+    // Save updated order to database
+    const updatedOrder = await order.save();
+    res.status(201).json({ message: 'Order updated successfully', order: updatedOrder });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 
 async function createOrderPDF(orderData) {
 
@@ -441,7 +518,7 @@ exports.myOrders = async (req, res) => {
           model: 'Product'
         },
       })
-      .select('-createdAt -__v')
+      .sort({createdAt: 'desc'})
       .exec();
 
       let orderDetails =  [];
@@ -449,6 +526,8 @@ exports.myOrders = async (req, res) => {
         var detail = {
           id : order.id,
           status : order.status,
+          createdAt : order.createdAt,
+          total: order.totalAmount,
           products : []
         }
         if(isCreatedByUser != null && isCreatedByUser == false){
