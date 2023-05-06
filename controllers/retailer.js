@@ -13,6 +13,7 @@ const { createBatch } = require("./product");
 const PDFDocument = require("pdfkit-table");
 const Table = require('pdfkit-table');
 const fs = require('fs');
+const { updateInventories } = require("./common");
 
 exports.signup = async (req, res) => {
     try {
@@ -90,8 +91,7 @@ exports.addBatchInRetailerInventory = async (req, res) => {
     try {
       const { batchNo, buyingPrice, sellingPrice, quantity } = req.body;
       const retailerId = req.user;
-      console.log(req.user);
-      // Validate fields
+
       if (!batchNo || !buyingPrice || !sellingPrice || !quantity) {
         return res
           .status(400)
@@ -104,8 +104,12 @@ exports.addBatchInRetailerInventory = async (req, res) => {
       }
   
       let batch = await Batch.findOne({ batchNo: batchNo }).exec();
+
       if (!batch) {
         batch = await createBatch(req, res);
+      }
+      else{
+        return res.status(409).json({error:"Batch Exists with this batchNo"})
       }
   
       let inventory = await Inventory.findOne({
@@ -160,24 +164,26 @@ try {
     }
 
     // Check if the product already exists
-    let product = await Product.findOne({ name: productName });
-    if (!product) {
-        // If not, create a new product
-        product = new Product({
-        name: productName,
-        description: productDescription,
-        sku: SKUGenerator(productName),
-        createdBy: retailerId
-        });
-        await product.save();
-    }
+
 
     // Check if the batch already exists for this product
     let existingBatch = await Batch.findOne({
-        product: product._id,
         batchNo: batchNo
     });
     if (!existingBatch) {
+
+        let product = await Product.findOne({ name: productName });
+        if (!product) {
+            // If not, create a new product
+            product = new Product({
+            name: productName,
+            description: productDescription,
+            sku: SKUGenerator(productName),
+            createdBy: retailerId
+            });
+            await product.save();
+        }
+
         // If not, create a new batch
         existingBatch = new Batch({
         product: product._id,
@@ -188,14 +194,10 @@ try {
         createdBy: retailerId
         });
         await existingBatch.save();
-    } else {
-        // If the batch already exists, update the existing batch
-        existingBatch.MRP = MRP;
-        existingBatch.mfgDate = mfg;
-        existingBatch.expiryDate = expiry;
-        await existingBatch.save();
     }
-
+    else{
+      continue;
+    }
     // Check if the inventory already exists for this batch and retailer
     let inventory = await Inventory.findOne({ batchId: existingBatch._id, retailerId: retailerId });
     if (!inventory) {
@@ -216,7 +218,7 @@ try {
       else{
         inventory = await Inventory.create({
           retailerId: retailerId,
-          batchId: batch._id,
+          batchId: existingBatch._id,
           buyingPrice: buyingPrice,
           sellingPrice: sellingPrice,
           quantity: quantity,
@@ -249,6 +251,7 @@ exports.myInventory = async (req, res) => {
       // Extract product information from each inventory
       const products = [];
       for (const inventory of inventories) {
+        console.log(inventory);
         const { batchId, quantity} = inventory;
         const { name: productName } = batchId.product;
         const {batchNo} = batchId;
@@ -288,7 +291,6 @@ exports.getBatchesByIds = async (req, res) => {
         }
       }).select('batchId quantity').exec();
 
-      console.log(batches[0]);
       batches = batches.map(obj=>{
         return {id: obj.batchId.id,
         batchNo: obj.batchId.batchNo,
@@ -297,10 +299,12 @@ exports.getBatchesByIds = async (req, res) => {
         expiry: obj.batchId.expiryDate,
         productName: obj.batchId.product.name,
         quantity: obj.quantity,
+        buyingPrice: obj.buyingPrice,
+        sellingPrice: obj.sellingPrice,
         isUpdateAllowed: obj.createdBy == retailerId
         }
       })
-      res.status(200).json({batches});
+      res.status(200).json(batches);
     } catch (error) {
       console.error(error);
       res.status(500).json({
@@ -442,7 +446,7 @@ exports.updateOrder = async (req, res) => {
         due: order.totalAmount,
         // TODO: Update if we add an option to pay when order created
       });
-      
+      await updateInventories(fromRetailerId, toRetailerId, sale.batches)
     }
     // Save updated order to database
     const updatedOrder = await order.save();
@@ -452,7 +456,6 @@ exports.updateOrder = async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
-
 
 async function createOrderPDF(orderData) {
 
@@ -555,7 +558,7 @@ exports.myOrders = async (req, res) => {
   }
 };
 
-   
+
 
 
 

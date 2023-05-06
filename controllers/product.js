@@ -8,10 +8,13 @@ exports.createBatch = async (req, res) => {
   try {
     // Validate the request body
     const { productName, batchNo, productDescription, MRP, mfg, expiry } = req.body;
-    if (!productName || !batchNo || !MRP || !mfg || !expiry) {
+    if (!productName || !batchNo || !MRP || !mfg) {
       throw new Error('Invalid request body');
     }
 
+    if(mfg >= expiry){
+      return res.status(400).json({"error": "Mfg should be greater than expiry"});
+    }
     // Check if the product already exists
     let product = await Product.findOne({ name: productName });
     if (!product) {

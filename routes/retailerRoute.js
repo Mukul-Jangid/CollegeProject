@@ -2,7 +2,7 @@ const express = require('express');
 const { signup,signin, addBatchInRetailerInventory, addBatchesToRetailerInventory, myInventory,getBatchesByIds, updateBatch, createOrder, myOrders, updateOrder} = require('../controllers/retailer');
 const { addProducts, getAllProducts, searchProduct, getRetailerProducts } = require('../controllers/product');
 const { verifyToken } = require('../middlewares/verifyToken');
-const { createConnectionRequest, getMyConnections, updateConnectionStatus } = require('../controllers/connection');
+const { createConnectionRequest, getMyConnections, updateConnectionStatus, searchRetailers } = require('../controllers/connection');
 const { getSales, createSale } = require('../controllers/sell');
 
 const router= express.Router();
@@ -39,5 +39,5 @@ router.route('/retailer/record_a_sell').post(verifyToken, createSale)
 router.route('/retailer/my_connections').get(verifyToken, getMyConnections)
 router.route('/retailer/create_connection_req').post(verifyToken, createConnectionRequest)
 router.route('/retailer/update_connection_req/:connectionId').put(verifyToken, updateConnectionStatus)
-
+router.route('/retailer/search_retailers').get(verifyToken, searchRetailers);
 module.exports = router;

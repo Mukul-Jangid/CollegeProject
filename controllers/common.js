@@ -1,4 +1,5 @@
 const BusinessType = require("../models/BusinessType");
+const Inventory = require("../models/Inventory");
 
 exports.createBusinessTypes = async (req, res) => {
   try {
@@ -27,4 +28,25 @@ exports.getAllBusinessTypes = async (req, res) => {
   }
 };
 
+
+exports.updateInventories = async(fromRetailerId, toRetailerId, batches)=> {
+  try {
+    const updatePromises = batches.map(async (batch) => {
+      const { batchId, quantity, price } = batch;
+      await Inventory.updateOne(
+        { batchId, retailerId: fromRetailerId },
+        { $inc: { quantity: -quantity } }
+      );
+      await Inventory.updateOne(
+        { batchId, retailerId: toRetailerId, buyingPrice: price },
+        { $inc: { quantity: quantity } },
+        { upsert: true }
+      );
+    });
+    await Promise.all(updatePromises);
+  } catch (error) {
+    console.error(error);
+    throw new Error('Failed to update inventories');
+  }
+}
 

@@ -2,7 +2,9 @@ const mongoose = require('mongoose');
 
 const batchSchema = new mongoose.Schema({
   batchNo:{
-    type: String
+    type: String,
+    required: true,
+    unique: true,
   },
   product: {
     type: mongoose.Schema.Types.ObjectId,
@@ -15,11 +17,10 @@ const batchSchema = new mongoose.Schema({
   },
   mfgDate: {
     type: Date,
-    require: true
+    required: true
   },
   expiryDate: {
-    type: Date,
-    required: true,
+    type: Date
   },
   createdDate: {
     type: Date,

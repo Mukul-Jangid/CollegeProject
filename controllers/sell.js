@@ -1,4 +1,5 @@
 const Sell = require('../models/Sell');
+const { updateInventories } = require('./common');
 
 exports.createSale = async (req, res) => {
   try {
@@ -11,9 +12,18 @@ exports.createSale = async (req, res) => {
     }
 
     // Check if all required fields are present for each batch
-    const invalidBatches = batches.filter(batch => !batch.batchId || !batch.quantity || !batch.price);
-    if (invalidBatches.length > 0) {
-      return res.status(400).json({ message: 'All batches must have batchId, quantity, and price fields' });
+    for (const batch of batches) {
+      if (!batch.batchNo) {
+        return res.status(400).json({ error: 'Batch number is required for all products.' });
+      }
+      else{
+        batch.batchId = await Batch.findOne({batchNo: product.batchNo}).select('id');
+        batch.batchId = product.batchId._id
+      }
+
+      if (!batch.quantity || batch.quantity <= 0) {
+        return res.status(400).json({ error: 'Quantity is required and should be greater than 0.' });
+      }
     }
 
     // Check if batch quantity is a positive integer
@@ -42,6 +52,8 @@ exports.createSale = async (req, res) => {
 
     // Save the sale object to the database
     const savedSale = await sale.save();
+
+    await updateInventories(fromRetailerId, toRetailerId, sale.batches)
 
     res.status(201).json(savedSale);
   } catch (error) {

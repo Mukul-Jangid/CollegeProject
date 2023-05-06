@@ -1,7 +1,7 @@
 const { mailer } = require("../mailer");
 const Connection = require("../models/Connection");
 const Retailer = require("../models/Retailer");
-
+const Fuse = require('fuse.js');
 
 exports.createConnectionRequest = async (req, res) => {
   try {
@@ -57,7 +57,7 @@ exports.getMyConnections = async (req, res) => {
         id: conn.id,
         isCreatedByUser: conn.requester == req.user,
         user: conn.requester == req.user ? conn.recipient : conn.requester,
-        sourceType: conn.requester == req.user ? conn.sourceType : null
+        sourceType:  conn.sourceType
       }
     })
     // TODO: Improve JSON response
@@ -92,9 +92,9 @@ exports.updateConnectionStatus = async (req, res) => {
     mailOptions = {
       from: process.env.MAIL_USER,
       to: connection.requester.email,
-      subject: 'Your connection request is accepted',
+      subject: `Your connection request is ${connection.status}`,
       html: `<p>Dear ${connection.requester.name},</p>
-             <p>Your connection request is accepted by:</p>
+             <p>Your connection request is ${connection.status} by:</p>
              <p>Business: ${connection.recipient.businessName}</p>
              <p>Owner: ${connection.recipient.name}</p>
              <p></p>
@@ -113,5 +113,24 @@ exports.updateConnectionStatus = async (req, res) => {
   }
 };
 
+
+exports.searchRetailers = async (req, res) => {
+  try {
+    const { advance_query } = req.query;
+    const currentUser = req.user; // assuming user is authenticated and req.user contains the current user
+
+    const options = {
+      keys: ['name', 'email', 'businessName']
+    };
+    const retailers = await Retailer.find({ _id: { $ne: currentUser } }); // exclude the current user
+    const fuse = new Fuse(retailers, options);
+    const results = fuse.search(advance_query);
+
+    return res.status(200).json(results);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+};
 
 
