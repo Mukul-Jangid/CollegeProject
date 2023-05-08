@@ -1,13 +1,13 @@
 const mongoose = require('mongoose');
 
 // Define the schema for the Inventory collection
-const inventorySchema = new mongoose.Schema({
-  retailerId: {
+const stockSchema = new mongoose.Schema({
+  retailer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Retailer',
     required: true
   },
-  batchId: {
+  batch: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Batch',
     required: true
@@ -26,7 +26,7 @@ const inventorySchema = new mongoose.Schema({
 });
 
 // Create the Inventory model
-const Inventory = mongoose.model('Inventory', inventorySchema);
+const Stock = mongoose.model('Stock', stockSchema);
 
 // Export the model
-module.exports = Inventory;
+module.exports = Stock;

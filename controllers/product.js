@@ -2,7 +2,7 @@ const Product = require("../models/Product");
 const Fuse = require('fuse.js');
 const { SKUGenerator } = require("../utils");
 const Batch = require("../models/Batch");
-const Inventory = require("../models/Inventory");
+const Inventory = require("../models/Stock");
 
 exports.createBatch = async (req, res) => {
   try {
@@ -46,10 +46,12 @@ exports.createBatch = async (req, res) => {
       await existingBatch.save();
     } else {
       // If the batch already exists, update the existing batch
-      existingBatch.MRP = MRP;
-      existingBatch.mfgDate = mfg;
-      existingBatch.expiryDate = expiry;
-      await existingBatch.save();
+      if(existingBatch.createdBy == req.user){
+        existingBatch.MRP = MRP;
+        existingBatch.mfgDate = mfg;
+        existingBatch.expiryDate = expiry;
+        await existingBatch.save();
+      }
     }
     return existingBatch;
   } catch (error) {
@@ -92,18 +94,18 @@ exports.searchProduct = async (req, res) => {
 
 exports.getRetailerProducts = async (req, res) => {
   try {
-    const retailerId = req.user;
-    const inventories = await Inventory.find({ retailerId, quantity: { $gt: 1 } }).populate('batchId');
+    const retailer = req.user;
+    const inventories = await Inventory.find({ retailer, quantity: { $gt: 1 } }).populate('batch');
 
     // Create a map of product ids to product information
     const productMap = new Map();
     for (const inventory of inventories) {
-      const product = await Product.findById(inventory.batchId.product);
-      productMap.set(inventory.batchId.id, {
+      const product = await Product.findById(inventory.batch.product);
+      productMap.set(inventory.batch.id, {
         name: product.name,
         sellingPrice: inventory.sellingPrice,
-        MRP: inventory.batchId.MRP,
-        batchNo: inventory.batchId.batchNo,
+        MRP: inventory.batch.MRP,
+        batchNo: inventory.batch.batchNo,
         quantityAvailable: inventory.quantity
       });
     }

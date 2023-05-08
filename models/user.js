@@ -15,10 +15,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  password: {
-    type: String,
-    required: true
-  },
   phone: {
     type: String,
     required: true
@@ -27,28 +23,8 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: 'Retailer',
     enum: ['Retailer', 'Customer']
-  },
-  isValid: {
-    type: Boolean,
-    default: false
-  },
-  uniqueString: {
-    type: String,
-    unique: true
   }
 });
-
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) {
-      return next();
-  }
-  this.password = await bcrypt.hash(this.password, 10);
-})
-
-
-userSchema.methods.validatePassoword = async function (usersendpassword) {
-  return bcrypt.compare(usersendpassword, this.password);
-}
 
 userSchema.methods.getJwtToken = function () {
   return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {

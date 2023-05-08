@@ -17,7 +17,7 @@ const orderSchema = new mongoose.Schema({
     default: 'active',
     enum: ['inactive', 'active', 'cancelled','declined']
   },
-  products: [{
+  batches: [{
     batchId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Batch'
@@ -30,11 +30,10 @@ const orderSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
-    demandedPrice: {
+    price: {
       type: Number,
       required: true
     }
-    //Deprecate this
   }
   ],
   totalAmount:{

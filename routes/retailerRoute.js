@@ -1,5 +1,5 @@
 const express = require('express');
-const { signup,signin, addBatchInRetailerInventory, addBatchesToRetailerInventory, myInventory,getBatchesByIds, updateBatch, createOrder, myOrders, updateOrder} = require('../controllers/retailer');
+const { signup,signin, addStockInRetailerInventory, addStocksToRetailerInventory, myInventory,getBatchesByIds, updateBatch, createOrder, myOrders, updateOrder, getUser} = require('../controllers/retailer');
 const { addProducts, getAllProducts, searchProduct, getRetailerProducts } = require('../controllers/product');
 const { verifyToken } = require('../middlewares/verifyToken');
 const { createConnectionRequest, getMyConnections, updateConnectionStatus, searchRetailers } = require('../controllers/connection');
@@ -17,10 +17,10 @@ router.route('/retailer/search_product').get(searchProduct);
 // He can view his inventory in which he will se each product name and its quantity there.
 // He can search for a product and add in his inventory (Search API)
 router.route('/retailer/my_inventory').get(verifyToken, myInventory);
-router.route('/retailer/add_batch_to_inventory').post(verifyToken, addBatchInRetailerInventory);
-router.route('/retailer/add_batches_in_bulk').post(verifyToken,addBatchesToRetailerInventory);
+router.route('/retailer/add_batch_to_inventory').post(verifyToken, addStockInRetailerInventory);
+router.route('/retailer/add_batches_in_bulk').post(verifyToken,addStocksToRetailerInventory);
 router.route('/retailer/get_batches_by_id').get(getBatchesByIds);//Returns product details of the inventory
-router.route('/retailer/update_batch').put(updateBatch);
+router.route('/retailer/update_batch').put(verifyToken, updateBatch);
 
 // Retailer creates order to other retailer
 // in recipent list we will show my_connections APIs response parameter as recipent id
@@ -40,4 +40,7 @@ router.route('/retailer/my_connections').get(verifyToken, getMyConnections)
 router.route('/retailer/create_connection_req').post(verifyToken, createConnectionRequest)
 router.route('/retailer/update_connection_req/:connectionId').put(verifyToken, updateConnectionStatus)
 router.route('/retailer/search_retailers').get(verifyToken, searchRetailers);
+
+
+router.route('/get_user').get(getUser);
 module.exports = router;

@@ -56,8 +56,7 @@ exports.getMyConnections = async (req, res) => {
       return {
         id: conn.id,
         isCreatedByUser: conn.requester == req.user,
-        user: conn.requester == req.user ? conn.recipient : conn.requester,
-        sourceType:  conn.sourceType
+        user: conn.requester == req.user ? conn.recipient : conn.requester
       }
     })
     // TODO: Improve JSON response
@@ -125,8 +124,8 @@ exports.searchRetailers = async (req, res) => {
     const retailers = await Retailer.find({ _id: { $ne: currentUser } }); // exclude the current user
     const fuse = new Fuse(retailers, options);
     const results = fuse.search(advance_query);
-
-    return res.status(200).json(results);
+    const filteredResults = results.map(({ item }) => item);
+    return res.status(200).json(filteredResults);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Server error' });

@@ -9,6 +9,8 @@ const retailerRoute = require('./routes/retailerRoute');
 const alertRoute = require('./routes/alertRoute')
 const adminRoute = require('./routes/adminRoute');
 const User = require('./models/User');
+const { startExpiryAlerts } = require('./schedulers/expiryAlert');
+const { startPaymentAlerts } = require('./schedulers/paymentAlert');
 app.use(express.json());
 app.use(express.urlencoded({extended:true}))
 app.use(CookieParser());
@@ -17,7 +19,6 @@ app.use(cors())
 // app.use('/api/v1',customerRoute);
 app.use('/api/v1',adminRoute)
 app.use('/api/v1',retailerRoute);
-
 Connection();
 
 app.get('/verify/:uniqueString', async(req, res)=>{
@@ -34,7 +35,8 @@ app.get('/verify/:uniqueString', async(req, res)=>{
     }
 })
 
-
+startExpiryAlerts();
+startPaymentAlerts();
 app.listen(5000, () => {
     console.log("server is running at port 5000");
 })

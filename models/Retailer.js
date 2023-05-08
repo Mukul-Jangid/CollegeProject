@@ -17,9 +17,6 @@ const retailerSchema = new mongoose.Schema({
   totalSales: {
     type: String,
     default: 0
-  },
-  paymentId: {
-    type: String
   }
 });
 
