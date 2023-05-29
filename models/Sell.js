@@ -18,6 +18,9 @@ const salesSchema = new mongoose.Schema({
   customerEmail:{
     type: String,
   },
+  customerName:{
+    type: String
+  },
   batches: [{
     batchId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -49,7 +52,7 @@ const salesSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  date: {
+  createdAt: {
     type: Date,
     default: Date.now
   },

@@ -23,6 +23,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: 'Retailer',
     enum: ['Retailer', 'Customer']
+  },
+  registrationToken:{
+    type: String,
+    required: true
   }
 });
 

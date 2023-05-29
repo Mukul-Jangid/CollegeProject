@@ -5,13 +5,20 @@ const Stock = require('../models/Stock');
 const Batch = require('../models/Batch');
 const { mailer } = require('../mailer');
 const Sale = require('../models/Sell');
+const { sendPushNotifications } = require('../firebaseNotifications');
 
 const task = async function() {
     let dueSells = await Sale.find({ due: { $gt: 0 } }).populate('fromRetailerId toRetailerId');
 
 
     let mailData = new Map();
-
+    let usersToBeNotified = dueSells.map(due=> due.toRetailerId.registrationToken);
+    var notificationPayload = {
+      notification: {
+          title: "Payment due alert",
+          body: "You have one or more payments pending of your orders, please check mail for more details"
+      }
+    };
     dueSells.forEach(due=>{
         if(mailData.has(due.toRetailerId.email)){
             let arr = mailData.get(due.toRetailerId.email);
@@ -24,12 +31,13 @@ const task = async function() {
             mailData.set(due.toRetailerId.email, arr);
         }
     })
-      
+  sendPushNotifications(notificationPayload, usersToBeNotified);
   for (let rec of mailData.keys()) {
     const pdfBuffer =  await createOrderPDF(mailData.get(rec));
+
     mailOptions = {
         from: process.env.MAIL_USER,
-        to: 'mukul.jangid@metacube.com',
+        to: rec,
         //TODO: add order Receiver's mail
         subject: `You have due payments on your Digital payments book account`,
         text: 'Hello, Please find attached a list of Transactions that are due in from your side',

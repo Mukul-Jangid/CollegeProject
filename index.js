@@ -11,32 +11,20 @@ const adminRoute = require('./routes/adminRoute');
 const User = require('./models/User');
 const { startExpiryAlerts } = require('./schedulers/expiryAlert');
 const { startPaymentAlerts } = require('./schedulers/paymentAlert');
+const { sendPushNotifications } = require('./firebaseNotifications');
 app.use(express.json());
 app.use(express.urlencoded({extended:true}))
 app.use(CookieParser());
 app.use(cors())
 // app.use('/api/v1',alertRoute)
-// app.use('/api/v1',customerRoute);
+app.use('/api/v1',customerRoute);
 app.use('/api/v1',adminRoute)
 app.use('/api/v1',retailerRoute);
 Connection();
 
-app.get('/verify/:uniqueString', async(req, res)=>{
-    const {uniqueString} = req.params
-    const user = await User.findOne({uniqueString})
-    if(user){
-        user.isValid = true
-        await user.save()
-        res.status(200).send("<h1>Your email is verified, you can sign in now</h1>");
 
-    }
-    else{
-        res.json('User not found')
-    }
-})
-
-startExpiryAlerts();
-startPaymentAlerts();
+// startExpiryAlerts();
+// startPaymentAlerts();
 app.listen(5000, () => {
     console.log("server is running at port 5000");
 })

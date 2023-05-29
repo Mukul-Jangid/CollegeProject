@@ -83,7 +83,12 @@ exports.searchProduct = async (req, res) => {
     };
     const fuse = new Fuse(products, options);
     const searchResults = fuse.search(name);
-    const filteredResults = searchResults.map(({ item }) => item);
+    const filteredResults = searchResults.map(({ item }) => {
+      return {
+        _id: item.id,
+        name: item.name
+      }
+    });
 
     return res.status(200).json(filteredResults);
   } catch (error) {
@@ -94,20 +99,46 @@ exports.searchProduct = async (req, res) => {
 
 exports.getRetailerProducts = async (req, res) => {
   try {
-    const retailer = req.user;
-    const inventories = await Inventory.find({ retailer, quantity: { $gt: 1 } }).populate('batch');
+    let retailer = req.user;
+    if (!req.user){
+      retailer = req.params.retailerId
+    }
+    const inventories = await Inventory.find({ retailer, quantity: { $gt: 1 } }).populate({
+      path: 'batch',
+      populate: {
+        path: 'product',
+        model: 'Product'
+      }
+    }).exec();
 
+    console.log(inventories);
     // Create a map of product ids to product information
     const productMap = new Map();
     for (const inventory of inventories) {
-      const product = await Product.findById(inventory.batch.product);
-      productMap.set(inventory.batch.id, {
-        name: product.name,
-        sellingPrice: inventory.sellingPrice,
-        MRP: inventory.batch.MRP,
-        batchNo: inventory.batch.batchNo,
-        quantityAvailable: inventory.quantity
+      let batches = [{
+          batchNo: inventory.batch.batchNo,
+          sellingPrice: inventory.sellingPrice,
+          quantity: inventory.quantity,
+          MRP: inventory.batch.MRP,
+          productName: inventory.batch.product.name
+      }]
+      if(productMap.has(inventory.batch.product.name)){
+        const temp = productMap.get(inventory.batch.product.name);
+        temp.batches.push({
+          batchNo: inventory.batch.batchNo,
+          sellingPrice: inventory.sellingPrice,
+          quantity: inventory.quantity,
+          MRP: inventory.batch.MRP,
+          productName: inventory.batch.product.name
+        })
+      }
+      else{
+      productMap.set(inventory.batch.product.name, {
+        _id: inventory.batch.product.id,
+        productName: inventory.batch.product.name,
+        batches 
       });
+    }
     }
 
     // Create a list of unique products the retailer has
