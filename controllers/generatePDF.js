@@ -44,4 +44,4 @@ exports.createSalePDF = async(saleData)=>{
       doc.on('error', reject);
       doc.end();
     });
-  }
+}

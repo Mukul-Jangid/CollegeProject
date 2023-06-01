@@ -509,7 +509,7 @@ exports.updateOrder = async (req, res) => {
       notificationPayload = {
         notification: {
             title: "Order Accepted",
-            body: `Your order from ${order.creator.businessName} has been accepted, please check mail for details`
+            body: `Your order from ${order.receiver.businessName} has been accepted, please check mail for details`
         }
       };
 
