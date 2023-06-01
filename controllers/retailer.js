@@ -7,14 +7,13 @@ const Retailer = require("../models/Retailer");
 const Sell = require('../models/Sell');
 
 
-const { randString, SKUGenerator } = require("../utils");
+const { SKUGenerator } = require("../utils");
 const { createBatch } = require("./product");
 
 const PDFDocument = require("pdfkit-table");
-const Table = require('pdfkit-table');
-const fs = require('fs');
 const { updateInventories } = require("./common");
 const User = require("../models/User");
+const { sendPushNotifications } = require("../firebaseNotifications");
 
 exports.getUser = async (req, res) => {
   try {
@@ -43,7 +42,14 @@ exports.getUser = async (req, res) => {
 exports.updateRegistrationToken = async (req, res) => {
   try {
     const { registrationToken } = req.body;
-    let user = await User.findOneAndUpdate({ _id: req.user }, { registrationToken: registrationToken });
+//     console.log("token"+req.user);
+// console.log("rtoken"+registrationToken);
+    // let user = await Retailer.findOneAndUpdate({ _id: req.user }, { registrationToken: registrationToken });
+let user = await User.findOne({_id: req.user});
+console.log(user);
+user.registrationToken = registrationToken;
+await user.save();
+console.log(user);
     if (!user) {
       return res.status(401).json({
         "message": "Some Error Occurred"
@@ -88,7 +94,7 @@ exports.signup = async (req, res) => {
                        <li>My Connections: here you can manage all of your connections to whom you do business</li>
                        </ul>
                        <p>Regards,</p>
-                       <p>Team Digital Payments book app</p>
+                       <p>Team TradeConnect app</p>
                        `
       };
       mailer(mailOptions)
@@ -126,7 +132,7 @@ exports.signin = async (req, res) => {
 
 exports.addStockInRetailerInventory = async (req, res) => {
   try {
-    const { productName, batchNo, buyingPrice, sellingPrice, quantity } = req.body;
+    let { productName, batchNo, buyingPrice, sellingPrice, quantity } = req.body;
     const retailerId = req.user;
 
     if (!batchNo || !buyingPrice || !sellingPrice || !quantity) {
@@ -165,6 +171,8 @@ exports.addStockInRetailerInventory = async (req, res) => {
     } else {
       // inventory.batchId = batch._id;
       if (stock.buyingPrice == buyingPrice && stock.sellingPrice == sellingPrice) {
+        quantity = typeof quantity === "string"? parseInt(quantity): quantity
+        stock.quantity = typeof stock.quantity === "string"? parseInt(stock.quantity): stock.quantity
         stock.quantity = quantity + stock.quantity;
         await stock.save();
       }
@@ -189,7 +197,11 @@ exports.addStocksToRetailerInventory = async (req, res) => {
   try {
     const { batches } = req.body;
     const retailerId = req.user;
-
+    // if(!batches.length > 0){
+    //   return res.status(400).json({
+    //     error: "Some error occurred"
+    //   })
+    // }
     // Loop through each batch in the request body
     for (const batch of batches) {
       // Validate the batch data
@@ -230,11 +242,9 @@ exports.addStocksToRetailerInventory = async (req, res) => {
         });
         await existingBatch.save();
       }
-      else {
-        continue;
-      }
       // Check if the inventory already exists for this batch and retailer
       let stock = await Stock.findOne({ batch: existingBatch._id, retailer: retailerId });
+      console.log(stock);
       if (!stock) {
         // If not, create a new inventory record
         stock = new Stock({
@@ -244,6 +254,7 @@ exports.addStocksToRetailerInventory = async (req, res) => {
           sellingPrice: sellingPrice,
           quantity: quantity
         });
+        console.log(stock);
         await stock.save();
       } else {
         if (stock.buyingPrice == buyingPrice && stock.sellingPrice == sellingPrice) {
@@ -275,6 +286,7 @@ exports.myInventory = async (req, res) => {
     }).exec();
 
     // Extract product information from each inventory
+    console.log("STOCK"+stocks);
     const products = [];
     for (const stock of stocks) {
       console.log(stock);
@@ -298,6 +310,7 @@ exports.myInventory = async (req, res) => {
     }
 
     // Return the list of unique products
+    console.log(products);
     return res.status(200).json(products);
   } catch (error) {
     console.error(error);
@@ -308,17 +321,18 @@ exports.myInventory = async (req, res) => {
 exports.getBatchesByIds = async (req, res) => {
   try {
     const retailerId = req.user;
+    console.log(retailerId);
     const batchIds = req.query.ids // Get the batch IDs from the request parameters
-    let batches = await Stock.find({ batch: batchIds }).populate({
+    let batches = await Stock.find({ batch: batchIds, retailer: retailerId }).populate({
       path: 'batch',
       populate: {
         path: 'product',
         model: 'Product'
       }
     }).exec();
-
-    batches = batches.map(obj => {
-      return {
+    batchesRes = new Map();
+    batches.forEach(obj => {
+      batchesRes.set(obj.batch.id, {
         _id: obj.batch.id,
         batchNo: obj.batch.batchNo,
         MRP: obj.batch.MRP,
@@ -329,9 +343,10 @@ exports.getBatchesByIds = async (req, res) => {
         buyingPrice: obj.buyingPrice,
         sellingPrice: obj.sellingPrice,
         isUpdateAllowed: obj.createdBy == retailerId
-      }
+      })
     })
-    res.status(200).json(batches);
+    console.log([...batchesRes.values()]);
+    res.status(200).json([...batchesRes.values()]);
   } catch (error) {
     console.error(error);
     res.status(500).json({
@@ -346,10 +361,11 @@ exports.updateBatch = async (req, res) => {
   try {
     // TODO: Only the quantity can be updated if user is not creator
     const { batchId } = req.query;
-    const { MRP, mfg, expiry, quantity } = req.body;
+    const retailer = req.user;
+    const { MRP, mfg, expiry, quantity,buyingPrice, sellingPrice} = req.body;
 
-    const obj = await Stock.findOne({ batch: batchId }).populate('batch')
-
+    const obj = await Stock.findOne({ batch: batchId, retailer: retailer}).populate('batch')
+    console.log(obj);
     if (!obj) {
       return res.status(404).json({ error: 'Batch not found' });
     }
@@ -359,10 +375,11 @@ exports.updateBatch = async (req, res) => {
       obj.batch.expiryDate = expiry
     }
     obj.quantity = quantity
-
+    obj.buyingPrice = buyingPrice
+    obj.sellingPrice = sellingPrice
     await obj.save();
     await obj.batch.save();
-    return res.status(200).json(obj);
+    return res.status(200).json({message: "Batch updated successfully"});
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Server error' });
@@ -372,7 +389,7 @@ exports.updateBatch = async (req, res) => {
 exports.createOrder = async (req, res) => {
   try {
     const { receiverId, batches, totalAmount } = req.body;
-
+console.log(totalAmount);
     if (!receiverId) {
       return res.status(400).json({ error: 'Receiver ID is required.' });
     }
@@ -453,21 +470,48 @@ exports.createOrder = async (req, res) => {
   }
 };
 
-// Update an existing order by ID
-// main use to cancel the order
 exports.updateOrder = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id).populate('creator receiver');
+    const order = await Order.findById(req.params.id).populate('creator receiver').populate('batches.batchId');
 
     if (!order) {
       return res.status(404).json({ error: 'Order not found' });
     }
     console.log(order);
     // Update order properties
+    let notificationPayload;
     if (req.body.status) {
       order.status = req.body.status;
+      if(req.body.status == 'declined'){
+        notificationPayload = {
+          notification: {
+              title: "Order Declined",
+              body: `Your order from ${order.creator.businessName} has been declined`
+          }
+        };
+      }
     }
     if (req.body.status == 'inactive') {
+      let flag = false;
+      order.batches.forEach(async batch=>{
+        console.log(batch);
+        let stock = await Stock.findOne({batch: batch.batchId, retailer: req.user});
+        stock.quantity = typeof stock.quantity === "string" ? parseInt(stock.quantity): stock.quantity
+        if(stock.quantity < batch.quantity){
+          flag = true;
+        }
+      })
+      if (flag) {
+        return res.status(400).json({
+          error:"You don't have enough stock to accept this order"
+        })
+      }
+      notificationPayload = {
+        notification: {
+            title: "Order Accepted",
+            body: `Your order from ${order.creator.businessName} has been accepted, please check mail for details`
+        }
+      };
 
       const sale = await Sell.create({
         fromRetailerId: order.receiver,
@@ -481,18 +525,25 @@ exports.updateOrder = async (req, res) => {
 
       await updateInventories(order.receiver, order.creator, sale.batches)
 
-      mailOptions = {
+      let mailOptions = {
         from: process.env.MAIL_USER,
-        to: 'mukul.jangid@metacube.com',
+        to: order.creator.email,
         //TODO: add order creator's mail
         subject: `Your Order has accepted`,
         text: `Your Order(OrderId: ${order.id}) from ${order.receiver.businessName} has accepted. Please update your latest products in your inventory`,
       };
+      mailer(mailOptions)
     }
-    mailer(mailOptions)
+    
     // Save updated order to database
     const updatedOrder = await order.save();
-    res.status(201).json({ message: 'Order updated successfully' });
+
+    registrationToken = []
+    registrationToken.push(order.creator.registrationToken);
+    console.log(registrationToken);
+    sendPushNotifications(notificationPayload,registrationToken)
+
+    return res.status(201).json({ message: 'Order updated successfully' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Server error' });

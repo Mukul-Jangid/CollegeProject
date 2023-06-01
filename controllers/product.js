@@ -143,7 +143,7 @@ exports.getRetailerProducts = async (req, res) => {
 
     // Create a list of unique products the retailer has
     const retailerProducts = [...productMap.values()];
-
+console.log(retailerProducts);
     return res.status(200).json(retailerProducts);
   } catch (error) {
     console.error(error);

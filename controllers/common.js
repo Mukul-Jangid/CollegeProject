@@ -44,6 +44,9 @@ exports.getAllBusinessTypes = async (req, res) => {
 exports.updateInventories = async(fromRetailerId, toRetailerId, batches)=> {
   try {
     const updatePromises = batches.map(async (batch) => {
+      console.log(batch);
+      console.log(fromRetailerId);
+      console.log(toRetailerId);
       const { batchId, quantity, price } = batch;
       await Stock.updateOne(
         { batch: batchId, retailer: fromRetailerId },
@@ -79,7 +82,8 @@ exports.getBatchByBatchNo = async(req,res)=>{
     MRP: batch.MRP,
     mfg: batch.mfgDate,
     expiry: batch.expiryDate,
-    sellingPrice: 0
+    sellingPrice: 0,
+    buyingPrice: 0
   }
   return res.status(200).json(batch)
  } catch (error) {

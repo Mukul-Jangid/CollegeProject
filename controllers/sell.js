@@ -95,7 +95,40 @@ exports.createSale = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 };
-
+exports.updateSale = async (req,res)=>{
+    try {
+      const { saleId } = req.params; // Get the sale ID from the request parameters
+      const { totalPrice, paid } = req.body; // Get the updated sale data from the request body
+  
+      // // Find the sale by its ID and update the specified fields
+      // const updatedSale = await Sell.findByIdAndUpdate(
+      //   saleId,
+      //   { totalPrice, paid, due: totalPrice-paid },
+      //   { new: true }
+      // );
+      const sell = await Sell.findById(saleId)
+console.log(sell);
+      if (paid > sell.due){
+        return res.status(301).json({
+          error: "paid amount should be less then due"
+        })
+      }
+      sell.due = sell.due - paid;
+      sell.paid = totalPrice - sell.due;
+      const updatedSale =await sell.save();
+      if (!updatedSale) {
+        // If the sale is not found, return an error response
+        return res.status(404).json({ error: 'Sale not found' });
+      }
+  
+      // Return the updated sale as the response
+      return res.json({message:"Sale Updated successfully"});
+    } catch (error) {
+      // Handle any errors that occur during the update process
+      console.error(error);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  }
 exports.getSales = async (req, res) => {
   try {
     const retailerId =req.user;

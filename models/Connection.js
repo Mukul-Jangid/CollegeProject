@@ -15,11 +15,8 @@ const connectionSchema = new mongoose.Schema({
     type: String,
     enum: ['pending', 'accepted', 'rejected'],
     default: 'pending'
-  },
-  sourceType: {
-    type: String
-  },// requester can use this field to specify which connection can be used for which product sourcing
-  createdAt: {
+  }
+  ,createdAt: {
     type: Date,
     default: Date.now
   }

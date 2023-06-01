@@ -3,7 +3,7 @@ const { signup,signin, addStockInRetailerInventory, addStocksToRetailerInventory
 const { addProducts, getAllProducts, searchProduct, getRetailerProducts } = require('../controllers/product');
 const { verifyToken } = require('../middlewares/verifyToken');
 const { createConnectionRequest, getMyConnections, updateConnectionStatus, searchRetailers } = require('../controllers/connection');
-const { getSales, createSale } = require('../controllers/sell');
+const { getSales, createSale, updateSale } = require('../controllers/sell');
 const { getBatchByBatchNo, myProfile, getLastNdaysOrders, getLastNdaysSales } = require('../controllers/common');
 const { downloadSampleSheet } = require('../controllers/sampleSheet');
 
@@ -21,7 +21,7 @@ router.route('/retailer/search_product').get(searchProduct);
 router.route('/retailer/my_inventory').get(verifyToken, myInventory);
 router.route('/retailer/add_batch_to_inventory').post(verifyToken, addStockInRetailerInventory);
 router.route('/retailer/add_batches_in_bulk').post(verifyToken,addStocksToRetailerInventory);
-router.route('/retailer/get_batches_by_id').get(getBatchesByIds);//Returns product details of the inventory
+router.route('/retailer/get_batches_by_id').get(verifyToken, getBatchesByIds);//Returns product details of the inventory
 router.route('/retailer/update_batch').put(verifyToken, updateBatch);
 
 // Retailer creates order to other retailer
@@ -37,6 +37,7 @@ router.route('/retailer/update_order/:id').put(verifyToken, updateOrder)
 router.route('/retailer/my_products').get(verifyToken, getRetailerProducts);
 router.route('/retailer/my_sells').get(verifyToken, getSales)
 router.route('/retailer/record_a_sell').post(verifyToken, createSale)
+router.route('/retailer/:saleId/update_sale').put(updateSale);
 
 //My connections
 router.route('/retailer/my_connections').get(verifyToken, getMyConnections)
@@ -46,7 +47,7 @@ router.route('/retailer/search_retailers').get(verifyToken, searchRetailers);
 
 
 router.route('/get_user').get(getUser);
-router.route('/retailer/:batchNo/get_batch_by_no').get(getBatchByBatchNo)
+router.route('/retailer/:batchNo/get_batch_by_no').get(verifyToken, getBatchByBatchNo)
 
 router.route('/retailer/my_profile').get(verifyToken, myProfile)
 
@@ -60,4 +61,5 @@ router.route('/retailer/sample_sheet').get(downloadSampleSheet);
 
 //update registrationToken
 router.route('/retailer/update_token').put(verifyToken, updateRegistrationToken);
+
 module.exports = router;

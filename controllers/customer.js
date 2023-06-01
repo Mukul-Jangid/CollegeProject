@@ -29,7 +29,7 @@ exports.signup = async (req, res) => {
                 html: `<h1>Welcome ${name} to our App!!!</h1>
                        <p>You can view transactions made at the shops you have visited through the app created for you.</p>
                        <p>Regards,</p>
-                       <p>Team Digital Payments book app</p>
+                       <p>Team TradeConnect app</p>
                        `
             };
             mailer(mailOptions)

@@ -8,13 +8,17 @@ exports.createConnectionRequest = async (req, res) => {
   try {
     const requester = req.user;
     const {recipient, sourceType } = req.body;
-    const connectionExists = await Connection.findOne({ requester, recipient });
-
+    const connectionExists = await Connection.findOne({
+      $or: [
+        { requester: requester, recipient: recipient },
+        { requester: recipient, recipient: requester }
+      ]
+    });    
     if (connectionExists && connectionExists.status == 'pending') {
-      return res.status(400).json({ message: 'Connection Request already exists' });
+      return res.status(400).json({ error: 'Connection Request already exists' });
     }
     else if(connectionExists && connectionExists.status == 'accepted'){
-      return res.status(400).json({message: 'Connection already exists'});
+      return res.status(400).json({error: 'Connection already exists'});
     }
     const recipientUser = await Retailer.findById(recipient);
     const requesterUser = await Retailer.findById(requester).populate('businessType');
@@ -36,7 +40,7 @@ exports.createConnectionRequest = async (req, res) => {
              <p>Please confirm if you want to connect with them.</p>
              <p>Accepting the connection request will make trade between you a lot easier</p>
              <p>Regards,</p>
-             <p>Team Digital Payments book app</p>`
+             <p>Team TradeConnect app</p>`
     };
     let notificationPayload = {
       notification: {
@@ -149,7 +153,7 @@ exports.updateConnectionStatus = async (req, res) => {
              <p></p>
              <p></p>
              <p>Regards,</p>
-             <p>Team Digital Payments book app</p>`
+             <p>Team TradeConnect app</p>`
     };
     let notificationPayload = {
       notification: {

@@ -12,6 +12,11 @@ const User = require('./models/User');
 const { startExpiryAlerts } = require('./schedulers/expiryAlert');
 const { startPaymentAlerts } = require('./schedulers/paymentAlert');
 const { sendPushNotifications } = require('./firebaseNotifications');
+var admin = require('firebase-admin');
+var serviceAccount = require('./firebaseCred.json');
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+});
 app.use(express.json());
 app.use(express.urlencoded({extended:true}))
 app.use(CookieParser());

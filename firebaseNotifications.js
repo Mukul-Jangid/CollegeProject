@@ -2,10 +2,6 @@ var admin = require('firebase-admin');
 var serviceAccount = require('./firebaseCred.json');
 
 exports.sendPushNotifications = (payload, registrationToken)=>{
-
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-    });
     // var registrationTokenz = ["d9I0xiyeTv6n2gai3OcXzg:APA91bFzCVeamZuRqt4Hyj8r0SndcMb3gDs5PqjawsX11TiLmtLRUbntPatmL-i_iL8MX61Q39bA3AAiNDA7HSukh-VNfLaEHPwdP8ii0u-13tL23ldpy-NOPLBR3zv7GsAJcWsT_kr4"];
     // var payload = {
     //     notification: {

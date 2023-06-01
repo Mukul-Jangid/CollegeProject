@@ -10,10 +10,6 @@ const retailerSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'BusinessType'
   },
-  taxId: {
-    type: String,
-    // required: true
-  },
   totalSales: {
     type: String,
     default: 0
