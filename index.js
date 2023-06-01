@@ -28,8 +28,8 @@ app.use('/api/v1',retailerRoute);
 Connection();
 
 
-// startExpiryAlerts();
-// startPaymentAlerts();
+startExpiryAlerts();
+startPaymentAlerts();
 app.listen(5000, () => {
     console.log("server is running at port 5000");
 })

@@ -1,6 +1,6 @@
 const { mailer } = require("../mailer");
 const Customer = require("../models/Customer");
-const Sales = require("../models/Sell");
+const Sell = require("../models/Sell");
 
 
 exports.signup = async (req, res) => {
@@ -44,7 +44,7 @@ exports.signup = async (req, res) => {
 exports.getMyRetailers = async (req,res)=>{
   try {
     const {customerEmail} = req.query;
-    let fromRetailers = await Sales.find({ customerEmail })
+    let fromRetailers = await Sell.find({ customerEmail })
       .populate({
         path: 'fromRetailerId',
         populate: {
@@ -76,8 +76,9 @@ exports.getMyRetailers = async (req,res)=>{
 }
 
 exports.customerTransactions = async (req, res)=>{
-    let customerId = req.user;
-    customer = await Customer.findOne(customerId);
+    try {
+      let customerId = req.user;
+    customer = await Customer.findOne({_id: customerId});
     if(!customer || customer.role != 'Customer'){
         return res.status(401).json({
             "error": "You are not a customer"
@@ -86,7 +87,15 @@ exports.customerTransactions = async (req, res)=>{
     let transactions = await Sell.find({
         customerEmail: customer.email
       })
-      .populate('fromRetailerId', 'name businessName email')
+      .populate('fromRetailerId', 'name businessName email phone address')
+      .populate({
+        path: 'fromRetailerId',
+        populate: {
+          path: 'businessType',
+          model: 'BusinessType',
+          select: 'name' // specify the fields you want to include/exclude from the businessType document
+        }
+      })
       .populate({
         path: 'batches.batchId',
         populate: {
@@ -96,18 +105,27 @@ exports.customerTransactions = async (req, res)=>{
         }
       })
       .sort({ date: -1 })
-      .select('-createdAt -__v')
+      .select('-__v')
       .exec();
 
       const transactionsJson = [];
       transactions.forEach(sale => {
         let obj = {
           _id: sale._id,
-          fromRetailerId: sale.fromRetailerId,
+          fromRetailer: {
+            name: sale.fromRetailerId.name,
+            businessType: sale.fromRetailerId.businessType.name,
+            businessName: sale.fromRetailerId.businessName,
+            phone: sale.fromRetailerId.phone,
+            email: sale.fromRetailerId.email,
+            address: sale.fromRetailerId.address,
+            totalSales: 0
+            //Hack to save android from crash
+          },
           totalPrice: sale.totalPrice,
           paid: sale.paid,
           due: sale.due,
-          date: sale.date,
+          date: sale.createdAt || sale.date,
           batches: []
         }
         sale.batches.forEach(batch=>{
@@ -122,5 +140,10 @@ exports.customerTransactions = async (req, res)=>{
         })
         transactionsJson.push(obj)
       })
+      console.log(transactionsJson);
+      return res.status(200).json(transactionsJson)
+    } catch (error) {
+      console.log(error);
+    }
 
 }

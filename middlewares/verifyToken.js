@@ -4,7 +4,7 @@ exports.verifyToken = (req, res, next)=>{
     if (authHeader) {
       // Split the authorization header into two parts: the scheme and token
       const [scheme, token] = authHeader.split(' ');
-  
+  console.log(token);
       if (scheme === 'Bearer' && token) {
         // Verify the token using the secret key
         jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
@@ -25,5 +25,5 @@ exports.verifyToken = (req, res, next)=>{
       // Return a 401 Unauthorized error if no authorization header is provided
       res.status(401).json({ message: 'Authorization header missing' });
     }
-  }
+}
   

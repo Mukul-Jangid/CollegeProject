@@ -4,6 +4,7 @@ const PDFDocument = require("pdfkit-table");
 const Stock = require('../models/Stock');
 const Batch = require('../models/Batch');
 const { mailer } = require('../mailer');
+const { sendMultiplePushNotifications } = require('../firebaseNotifications');
 
 const task = async function() {
     // Calculate the date that is 2 months from now
@@ -18,7 +19,12 @@ const task = async function() {
   const Stocks = await Stock.find({
     batch: { $in: expiringBatches }
   }).populate('retailer batch');
-
+  let usersToBeNotified = Stocks.map(stock=> stock.retailer.registrationToken).filter(token=> token != null);
+  const usersToBeNotifiedSet = new Set(usersToBeNotified);
+  var notificationPayload = {
+        title: "Product Expiry alert",
+        body: "You have one or more products expiring in upcoming 2 months"
+  };
   let mailData = new Map();
   Stocks.forEach(stock=>{
     if(mailData.has(stock.retailer.email)){
@@ -31,12 +37,13 @@ const task = async function() {
         arr.push(stock.batch);
         mailData.set(stock.retailer.email, arr);
     }
-  })
+  }) 
+  sendMultiplePushNotifications(notificationPayload, Array.from(usersToBeNotifiedSet))
   for (let rec of mailData.keys()) {
     const pdfBuffer =  await createOrderPDF(mailData.get(rec));
     mailOptions = {
         from: process.env.MAIL_USER,
-        to: 'mukul.jangid@metacube.com',
+        to: rec,
         //TODO: add order Receiver's mail
         subject: `Expiry Alerts for Digital payments book inventory`,
         text: 'Hello, Please find attached a list of products that are expiring in upcoming 2 months',

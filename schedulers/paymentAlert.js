@@ -5,33 +5,32 @@ const Stock = require('../models/Stock');
 const Batch = require('../models/Batch');
 const { mailer } = require('../mailer');
 const Sale = require('../models/Sell');
-const { sendPushNotifications } = require('../firebaseNotifications');
+const { sendMultiplePushNotifications } = require('../firebaseNotifications');
 
 const task = async function() {
     let dueSells = await Sale.find({ due: { $gt: 0 } }).populate('fromRetailerId toRetailerId');
 
 
     let mailData = new Map();
-    let usersToBeNotified = dueSells.map(due=> due.toRetailerId.registrationToken);
+    let usersToBeNotified = dueSells.map(due=> due.toRetailerId?.registrationToken).filter(token=> token != null);
+    const usersToBeNotifiedSet = new Set(usersToBeNotified);
     var notificationPayload = {
-      notification: {
           title: "Payment due alert",
           body: "You have one or more payments pending of your orders, please check mail for more details"
-      }
     };
     dueSells.forEach(due=>{
-        if(mailData.has(due.toRetailerId.email)){
-            let arr = mailData.get(due.toRetailerId.email);
+        if(mailData.has(due.toRetailerId?.email||due.customerEmail)){
+            let arr = mailData.get(due.toRetailerId?.email||due.customerEmail);
             arr.push(due);
-            mailData.set(due.toRetailerId.email, arr);
+            mailData.set(due.toRetailerId?.email||due.customerEmail, arr);
         }
         else{
             let arr = [];
             arr.push(due);
-            mailData.set(due.toRetailerId.email, arr);
+            mailData.set(due.toRetailerId?.email||due.customerEmail, arr);
         }
     })
-  sendPushNotifications(notificationPayload, usersToBeNotified);
+  sendMultiplePushNotifications(notificationPayload, Array.from(usersToBeNotifiedSet));
   for (let rec of mailData.keys()) {
     const pdfBuffer =  await createOrderPDF(mailData.get(rec));
 
